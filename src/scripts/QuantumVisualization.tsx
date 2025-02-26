@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
 
-const FractalAnimation: React.FC = () => {
+const QuantumVisualization: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -24,47 +24,55 @@ const FractalAnimation: React.FC = () => {
     const geometry = new THREE.PlaneGeometry(4, 4, 100, 100);
 
     const vertexShader = `
-      varying vec2 vUv;
-      void main() {
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `;
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `;
 
     const fragmentShader = `
-      uniform float time;
-      uniform vec2 resolution;
-      varying vec2 vUv;
-
-      float fractal(vec2 uv) {
-        vec2 c = uv * 3.0 - vec2(1.5, 1.5);
-        vec2 z = vec2(0.0);
-        float iterations = 0.0;
-        for (int i = 0; i < 100; i++) {
-          if (length(z) > 2.0) break;
-          z = vec2(z.x * z.x - z.y * z.y, 2.0 * z.x * z.y) + c;
-          iterations += 1.0;
+        uniform float time;
+        uniform vec2 resolution;
+        uniform float collapse; // 0.0:
+  
+        varying vec2 vUv;
+  
+        float interference(vec2 uv, float t) {
+          float wave1 = sin((uv.x + t) * 10.0);
+          float wave2 = cos((uv.y - t) * 10.0);
+          return (wave1 + wave2) * 0.5;
         }
-        return iterations;
-      }
+  
+        void main() {
+          vec2 uv = vUv;
+          
+          float pattern = interference(uv, time);
+  
+          vec3 stateA = vec3(0.2, 0.4, 0.8);
+          vec3 stateB = vec3(0.8, 0.3, 0.3);
+  
+          float blendFactor = 0.5 + 0.5 * sin(time * 2.0);
+          vec3 superposition = mix(stateA, stateB, blendFactor);
+  
+          vec3 finalColor = mix(superposition, stateA, collapse);
+  
+          finalColor *= 0.5 + 0.5 * pattern;
+  
+          gl_FragColor = vec4(finalColor, 1.0);
+        }
+      `;
 
-      void main() {
-        vec2 uv = vUv;
-        uv.x += sin(time + uv.y * 10.0) * 0.1;
-        uv.y += cos(time + uv.x * 10.0) * 0.1;
-        float m = fractal(uv);
-        float color = m / 100.0;
-        gl_FragColor = vec4(vec3(color), 1.0);
-      }
-    `;
+    const uniforms = {
+      time: { value: 0.0 },
+      resolution: {
+        value: new THREE.Vector2(window.innerWidth, window.innerHeight),
+      },
+      collapse: { value: 0.0 },
+    };
 
     const material = new THREE.ShaderMaterial({
-      uniforms: {
-        time: { value: 0.0 },
-        resolution: {
-          value: new THREE.Vector2(window.innerWidth, window.innerHeight),
-        },
-      },
+      uniforms,
       vertexShader,
       fragmentShader,
     });
@@ -76,23 +84,27 @@ const FractalAnimation: React.FC = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
-      material.uniforms.resolution.value.set(
-        window.innerWidth,
-        window.innerHeight
-      );
+      uniforms.resolution.value.set(window.innerWidth, window.innerHeight);
     };
     window.addEventListener("resize", handleResize);
+
+    const handleClick = () => {
+      uniforms.collapse.value = uniforms.collapse.value === 0.0 ? 1.0 : 0.0;
+    };
+    renderer.domElement.addEventListener("click", handleClick);
 
     const clock = new THREE.Clock();
     const animate = () => {
       requestAnimationFrame(animate);
-      material.uniforms.time.value = clock.getElapsedTime();
+      uniforms.time.value = clock.getElapsedTime();
       renderer.render(scene, camera);
     };
     animate();
 
+    // Cleanup
     return () => {
       window.removeEventListener("resize", handleResize);
+      renderer.domElement.removeEventListener("click", handleClick);
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
@@ -105,4 +117,4 @@ const FractalAnimation: React.FC = () => {
   return <div ref={containerRef} style={{ width: "100vw", height: "100vh" }} />;
 };
 
-export default FractalAnimation;
+export default QuantumVisualization;
