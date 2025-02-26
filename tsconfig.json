@@ -4,6 +4,7 @@
   "exclude": ["dist"],
   "compilerOptions": {
     "baseUrl": "./src",
+    "jsx": "react-jsx",
     "paths": {
       "@scripts/*": ["scripts/*"],
       "@layouts/*": ["layouts/*"]

@@ -1,14 +1,8 @@
 ---
 import Layout from "../../layouts/Layout.astro";
+import FractalAnimationScript from "../../scripts/FractalAnimation";
 ---
 
 <Layout>
-  <div id="three-container"></div>
-
-  <script>
-    import initFractalAnimation from "@scripts/FractalAnimation.js";
-
-    // Load the fractal animation
-    initFractalAnimation();
-  </script>
+  <FractalAnimationScript client:load />
 </Layout>
