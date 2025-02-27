@@ -53,8 +53,8 @@ const FractalAnimation: React.FC = () => {
         uv.x += sin(time + uv.y * 10.0) * 0.1;
         uv.y += cos(time + uv.x * 10.0) * 0.1;
         float m = fractal(uv);
-        float color = m / 100.0;
-        gl_FragColor = vec4(vec3(color), 1.0);
+        vec3 color = mix(vec3(0.0, 0.2, 0.0), vec3(0.0, 1.0, 0.4), m / 100.0);
+        gl_FragColor = vec4(color, 1.0);
       }
     `;
 
